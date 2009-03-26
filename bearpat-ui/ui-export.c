@@ -17,6 +17,7 @@ struct CLIP_LIMIT clip_limit = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
 static SIDE side = LEFT;
 static CLIP clip = CLIP_NONE;
+static COOR_SYS coor = COOR_FREESURFER;
 static gboolean take_out = FALSE;
 static gboolean mod_param = TRUE;
 
@@ -58,6 +59,19 @@ gboolean event_set_coor (GtkWidget *widget, gpointer data) {
 	*d = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 	mod_param = TRUE;
 
+	return FALSE;
+}
+
+gboolean event_set_coorsys (GtkWidget *widget, gpointer data ) {
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+		int c = (int) data;
+		
+		if ((c == COOR_FREESURFER) || (c == COOR_SCANNER) || (c == COOR_MIMICS)) {
+			mod_param = TRUE;
+			coor = c;
+		}
+		g_message("coordinate system %d", coor);
+	}
 	return FALSE;
 }
 
@@ -186,9 +200,11 @@ static char * TAGS [] = {
 "\n" TAG_PROGRESS " 8 ",
 "\n" TAG_PROGRESS " 9 ",
 "\n" TAG_PROGRESS " 10 ",
+"\n" TAG_PROGRESS " 11 ",
+"\n" TAG_PROGRESS " 12 ",
 NULL };
 
-#define MAX_ARG 96
+#define MAX_ARG 128
 
 gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	GtkTreeIter iter;
@@ -198,6 +214,9 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	char *fname2 = NULL;
 	char *fname3 = NULL;
 	char *fname4 = NULL;
+	char *matname1 = NULL;
+	char *matname2 = NULL;
+	char *matname3 = NULL;
 	char *box = NULL;
 	char *subj = NULL;
 	char *target = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (widget));
@@ -274,9 +293,23 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	subj = g_strdup((char *) g_value_get_string(&value));
 	g_value_unset(&value);
 
+	
+	// get matrices
+	if ((coor == COOR_SCANNER) || (coor == COOR_MIMICS)) {
+		matname1 = mktemp(strdup("/tmp/vox2ras.XXXXXX"));
+		matname2 = mktemp(strdup("/tmp/vox2ras-tkr.XXXXXX"));
+		if (coor == COOR_MIMICS)
+			matname3 = mktemp(strdup("/tmp/orig.XXXXXX"));			
+		dump_fsmat(subj, matname1, matname2, matname3);
+	}
+	
 #define add_arg(a)	\
 	if (i == MAX_ARG-1) {	\
 		g_message("out of args");	\
+	\
+		if (matname1) { unlink(matname1); free(matname1); } \
+		if (matname2) { unlink(matname2); free(matname2); } \
+		if (matname3) { unlink(matname3); free(matname3); } \
 	\
 		if (subj)	g_free(subj);	\
 		if (fname1)	g_free(fname1);	\
@@ -354,6 +387,21 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 			add_arg("1");
 		}
 	}
+	
+	// transform into native coordinates
+	if ((coor == COOR_SCANNER) || (coor == COOR_MIMICS)) {
+		add_tag("Transforming coordinates\n");
+		add_arg("fsmat");
+		add_arg(matname1);
+		add_arg(matname2);
+		add_arg("transform");
+		if (coor == COOR_MIMICS) {
+			add_arg("loadmat");
+			add_arg(matname3);
+			add_arg("transform");
+		}
+	}
+	
 	add_tag("Saving output\n");
 	add_arg("save");
 	add_arg(target);
@@ -362,16 +410,6 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	add_arg("end");
 
 	g_message("run surface export script ( %s )", argv[0]);
-/*	if (!g_spawn_sync(NULL,	// cwd
-		argv,
-		NULL, // inherit ENV
-		G_SPAWN_SEARCH_PATH,
-		NULL, NULL, // no GSpawnChildSetupFunc child_setup,
-		NULL,	// ignore stdout
-		NULL,	// ignore stderr
-		NULL,	// ignore exit status
-		&error)
-	)*/
 
 	int fdes;
 	if (!g_spawn_async_with_pipes(NULL,	// cwd
@@ -388,6 +426,9 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	) {
 		g_printerr ("Failed to launch %s\n error : %s\nscript :\n%s\n", argv[0], error->message, argv[1]);
 		g_free (error);
+		if (matname1) { unlink(matname1); free(matname1); }
+		if (matname2) { unlink(matname2); free(matname2); }
+		if (matname3) { unlink(matname3); free(matname3); }
 		if (fname1)	g_free(fname1);
 		if (fname2)	g_free(fname2);
 		if (fname3)	g_free(fname3);
@@ -399,6 +440,9 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 
 	mod_param = FALSE;
 
+	if (matname1) { free(matname1); }
+	if (matname2) { free(matname2); }
+	if (matname3) { free(matname3); }
 	if (fname1)	g_free(fname1);
 	if (fname2)	g_free(fname2);
 	if (fname3)	g_free(fname3);

@@ -19,6 +19,12 @@ extern struct CLIP_LIMIT {
 	double right;
 } clip_limit;
 
+typedef enum {
+	COOR_FREESURFER,
+	COOR_SCANNER,
+	COOR_MIMICS
+} COOR_SYS;
+
 extern char *surf_edit;
 extern char *meshlab_cmd;
 extern char *meshlab_ico;
@@ -28,6 +34,7 @@ extern char *k3b_ico;
 gboolean event_set_side (GtkWidget *widget, gpointer data );
 gboolean event_set_clip (GtkWidget *widget, gpointer data );
 gboolean event_set_coor (GtkWidget *widget, gpointer data );
+gboolean event_set_coorsys(GtkWidget *widget, gpointer data );
 gboolean event_set_takeout(GtkWidget *widget, gpointer data);
 gboolean event_savesurf(GtkWidget *widget, gpointer data);
 gboolean event_meshlab(GtkWidget *widget, gpointer data);

@@ -19,6 +19,7 @@ enum {
 
 void scan_fssubj();
 void build_fssubj_store();
+void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr , const char *orig = NULL, double *det=NULL, double *cres=NULL, double *rres=NULL, double *sres=NULL);
 gboolean event_launch_recon (GtkWidget *widget, gpointer data );
 gboolean event_restart_recon_bm (GtkWidget *widget, gpointer data );
 gboolean event_restart_recon_wm (GtkWidget *widget, gpointer data );
