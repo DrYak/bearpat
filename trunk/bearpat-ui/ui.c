@@ -555,28 +555,29 @@ void build_interface() {
 		GtkWidget *vbox = gtk_vbox_new (FALSE, 4);
 
 		// side
-		GtkWidget *group_box = gtk_vbox_new (FALSE, 4);
+		GtkWidget *group_box = gtk_hbox_new (FALSE, 4);
 
 		GtkWidget *button = gtk_radio_button_new_with_label (NULL, "Left");
 		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_side), (gpointer) LEFT);
 		gtk_toggle_button_toggled(GTK_TOGGLE_BUTTON(button));
 		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(button), TRUE);
-		gtk_box_pack_start (GTK_BOX (group_box), button, FALSE, FALSE, 0);
+//		gtk_box_pack_start (GTK_BOX (group_box), button, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
 		gtk_widget_show (button);
 
 		button = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON(button), "Right");
 		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_side), (gpointer) RIGHT);
-		gtk_box_pack_start (GTK_BOX (group_box), button, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
 		gtk_widget_show (button);
 
 		button = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON(button), "Both");
 		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_side), (gpointer) BOTH );
-		gtk_box_pack_start (GTK_BOX (group_box), button, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
 		gtk_widget_show (button);
 
 //		GtkWidget *group_frame = gtk_frame_new ("Hemisphere");
 //		gtk_frame_set_shadow_type (GTK_FRAME (group_frame), GTK_SHADOW_ETCHED_IN);
-		GtkWidget *group_frame = gtk_expander_new("Naming options");
+		GtkWidget *group_frame = gtk_expander_new("Hemisphere");
 		gtk_expander_set_expanded(GTK_EXPANDER(group_frame), TRUE);
 		gtk_container_add (GTK_CONTAINER (group_frame), group_box);
 		gtk_widget_show (group_box);
@@ -652,6 +653,40 @@ void build_interface() {
 		gtk_box_pack_start (GTK_BOX (vbox), group_frame,  FALSE, FALSE, 0);
 		gtk_widget_show (group_frame);
 
+		
+		// coordinates system		
+		group_box = gtk_hbox_new (FALSE, 4);
+		
+		button = gtk_radio_button_new_with_label (NULL, "FreeSurfer RAS");
+		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_coorsys), (gpointer) COOR_FREESURFER);
+		gtk_toggle_button_toggled(GTK_TOGGLE_BUTTON(button));
+		gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(button), TRUE);
+		//		gtk_box_pack_start (GTK_BOX (group_box), button, FALSE, FALSE, 0);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
+		gtk_widget_show (button);
+		
+		button = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON(button), "Scanner Native RAS");
+		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_coorsys), (gpointer) COOR_SCANNER);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
+		gtk_widget_show (button);
+		
+		button = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON(button), "Mimics");
+		g_signal_connect (G_OBJECT (button), "toggled", G_CALLBACK (event_set_coorsys), (gpointer) COOR_MIMICS);
+		gtk_box_pack_start (GTK_BOX (group_box), button, TRUE, TRUE, 3);
+		gtk_widget_show (button);
+		
+		//		GtkWidget *group_frame = gtk_frame_new ("Hemisphere");
+		//		gtk_frame_set_shadow_type (GTK_FRAME (group_frame), GTK_SHADOW_ETCHED_IN);
+		group_frame = gtk_expander_new("Coordinate system");
+		gtk_expander_set_expanded(GTK_EXPANDER(group_frame), TRUE);
+		gtk_container_add (GTK_CONTAINER (group_frame), group_box);
+		gtk_widget_show (group_box);
+		gtk_box_pack_start (GTK_BOX (vbox), group_frame,  FALSE, FALSE, 0);
+		gtk_widget_show (group_frame);
+		
+		
+		
+		
 			// pack it
 		GtkWidget *frame = gtk_frame_new ("Export to STL options");
 		gtk_frame_set_shadow_type (GTK_FRAME (frame), GTK_SHADOW_ETCHED_IN);

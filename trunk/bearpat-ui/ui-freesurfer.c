@@ -264,6 +264,7 @@ void scan_fssubj() {
 	) {
 		g_printerr ("Failed to launch %s\n error : %s\nscript :\n%s\n", argv[0], error->message, argv[2]);
 		g_free (error);
+		g_free(cmd);
 		return;
 	}
 	output_split = g_strsplit(output, "\n", 0);
@@ -350,6 +351,53 @@ void build_fssubj_store() {
 }
 
 
+void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr, const char *orig, double *det, double *cres, double *rres, double *sres) {
+	GString *script = freesurfer_script();
+	GError *error = NULL;
+	char *cmd;
+	
+	g_string_append_printf(script,
+		"mri_info --vox2ras $SUBJECTS_DIR/%s/mri/T1.mgz > %s ;\n"
+		"mri_info --vox2ras-tkr $SUBJECTS_DIR/%s/mri/T1.mgz > %s ;\n"
+		"mri_info --ras2vox $SUBJECTS_DIR/%s/mri/orig/001.mgz > %s ;\n"
+		,
+		subj, vox2ras,
+		subj, vox2ras_tkr,
+		subj, orig);
+
+	if (orig) {
+		g_string_append_printf(script,
+			"mri_info --ras2vox $SUBJECTS_DIR/%s/mri/orig/001.mgz > %s ;\n"
+			"mri_info --det $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+			"mri_info --cres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+			"mri_info --rres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+			"mri_info --sres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+			,
+			subj, orig);
+	}
+	
+	cmd = g_string_free (script, FALSE);
+	gchar *argv[] = { "sh", "-c", cmd, NULL };
+	
+	g_message("get freesurfer matrices ( shell : %s )", argv[0]);
+	if (!g_spawn_sync(NULL,	// cwd
+	 argv,
+	 NULL, // inherit ENV
+	 G_SPAWN_SEARCH_PATH,
+	 NULL, NULL, // no GSpawnChildSetupFunc child_setup,
+	 NULL,	// ignore stdout
+	 NULL,	// ignore stderr
+	 NULL,	// ignore exit status
+	 &error)
+	) {
+		g_printerr ("Failed to launch %s\n error : %s\nscript :\n%s\n", argv[0], error->message, argv[2]);
+		g_free (error);
+		g_free(cmd);
+		return;
+	}	
+	g_free(cmd);
+	return;
+}
 
 
 
