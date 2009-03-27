@@ -7,7 +7,7 @@
 
 #include "ui.h"
 #include "ui-freesurfer.h"
-
+//#include "dicom.h"	// for building Mimics' matrix
 
 // FreeSurfer home page :
 // -	http://surfer.nmr.mgh.harvard.edu/	
@@ -351,7 +351,7 @@ void build_fssubj_store() {
 }
 
 
-void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr, const char *orig, double *det, double *cres, double *rres, double *sres) {
+void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr, const char *orig, double *det, double *cres, double *rres, double *sres, double *offset) {
 	GString *script = freesurfer_script();
 	GError *error = NULL;
 	char *cmd;
@@ -372,20 +372,28 @@ void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr, 
 			"mri_info --cres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
 			"mri_info --rres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
 			"mri_info --sres $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+			"mri_info --slicedirection $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
+		    "mri_info --vox2ras $SUBJECTS_DIR/%s/mri/orig/001.mgz ;\n"
 			,
-			subj, orig);
+			subj, orig,
+			subj,
+			subj,
+			subj,
+			subj,
+			subj,
+			subj);
 	}
 	
 	cmd = g_string_free (script, FALSE);
 	gchar *argv[] = { "sh", "-c", cmd, NULL };
-	
+	gchar *output = NULL;
 	g_message("get freesurfer matrices ( shell : %s )", argv[0]);
-	if (!g_spawn_sync(NULL,	// cwd
+	if (! g_spawn_sync(NULL,	// cwd
 	 argv,
 	 NULL, // inherit ENV
 	 G_SPAWN_SEARCH_PATH,
 	 NULL, NULL, // no GSpawnChildSetupFunc child_setup,
-	 NULL,	// ignore stdout
+	 &output,	// stdout - data for mimics
 	 NULL,	// ignore stderr
 	 NULL,	// ignore exit status
 	 &error)
@@ -396,6 +404,61 @@ void dump_fsmat(const char *subj, const char *vox2ras, const char *vox2ras_tkr, 
 		return;
 	}	
 	g_free(cmd);
+	
+	
+	if (orig) {
+		char buffer[32];
+		double x = 0.,y =0.,z=0.;
+		sscanf(output, "%lf\n%lf\n%lf\n%lf\n"
+			"%32s\n"
+			" %*lf %*lf %*lf %lf\n"
+			" %*lf %*lf %*lf %lf\n"
+			" %*lf %*lf %*lf %lf\n"
+			, 
+			det, cres, rres, sres,
+			buffer,
+			&x, &y, &z);
+		if (0 == strcasecmp(buffer, "sagittal")) {
+			*offset = -x;
+		} else if (0 == strcasecmp(buffer, "coronal")) {
+			*offset = -y;
+		} else if (0 == strcasecmp(buffer, "axial")) {
+			*offset = z;
+		}
+		
+/*		
+		gchar *dirname = g_strdup_printf("%s/%s/mri/orig/001/", freesurfer_subjects, subj);
+		GDir *d = g_dir_open(dirname, 0, NULL);
+		
+		// find the offset of the first DICOM frame
+		if (d) {
+			const gchar *fname;
+			double min = +10000.;
+
+			while (fname = g_dir_read_name(d)) {
+				gchar *fullpath = g_strdup_printf("%s/%s", dirname, fname);
+				double loc = +10000.;
+				char *seruid = NULL, *name = NULL, *subjid = NULL, *datetime = NULL, *fulltype = NULL, *fulldesc = NULL, *res = NULL;
+				if (DICOM_FOUND_LOC & dicom_getinfo_overview (fullpath, &seruid, &name, &subjid, &datetime, &fulltype, &fulldesc, &res, &loc))
+					if (loc < min) min = loc;
+				g_free(fullpath);				
+				if (seruid)	free(seruid);
+				if (name)	free(name);
+				if (subjid)	free(subjid);
+				if (datetime)	free(datetime);
+				if (fulltype)	free(fulltype);
+				if (fulldesc)	free(fulldesc);
+				if (res)	free(res);
+			}
+			g_dir_close(d);
+			
+			if (min < +10000.) *offset = min;
+		}
+		g_free(dirname);
+*/
+		g_message("results %f\t%f\t%f\t%f\t%f", *det, *cres, *rres, *sres, *offset);
+	}
+	g_free(output);
 	return;
 }
 
