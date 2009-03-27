@@ -25,7 +25,7 @@
 //		Part 5	Data Structures and Encoding
 //		Part 10	Media Storage and File Format for Media Interchange 
 
-int dicom_getinfo_overview (char *fname, char **seruid, char **name, char **subjid, char **datetime, char **fulltype, char **fulldesc, char **res, double *loc) {
+int dicom_getinfo_overview (const char *fname, char **seruid, char **name, char **subjid, char **datetime, char **fulltype, char **fulldesc, char **res, double *loc) {
 	FILE *f;
 	char signature[SIG_LEN];
 

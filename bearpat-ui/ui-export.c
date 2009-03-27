@@ -217,6 +217,8 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	char *matname1 = NULL;
 	char *matname2 = NULL;
 	char *matname3 = NULL;
+	char *matrix4 = NULL;
+	double cres=1.,rres=1.,sres=1.,offset=0;
 	char *box = NULL;
 	char *subj = NULL;
 	char *target = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (widget));
@@ -296,11 +298,16 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	
 	// get matrices
 	if ((coor == COOR_SCANNER) || (coor == COOR_MIMICS)) {
+		double det = 0;
 		matname1 = mktemp(strdup("/tmp/vox2ras.XXXXXX"));
 		matname2 = mktemp(strdup("/tmp/vox2ras-tkr.XXXXXX"));
 		if (coor == COOR_MIMICS)
 			matname3 = mktemp(strdup("/tmp/orig.XXXXXX"));			
-		dump_fsmat(subj, matname1, matname2, matname3);
+		dump_fsmat(subj, matname1, matname2, matname3, &det, &cres, &rres, &sres, &offset);
+		
+		// left-handed chirality
+		if (coor == COOR_MIMICS)
+			if (det < 0) rres = -rres;
 	}
 	
 #define add_arg(a)	\
@@ -317,6 +324,7 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 		if (fname3)	g_free(fname3);	\
 		if (fname4)	g_free(fname4);	\
 		if (box)	g_free(box);	\
+		if (matrix4)	g_free(matrix4);	\
 	\
 		return FALSE;	\
 	}	\
@@ -399,6 +407,11 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 			add_arg("loadmat");
 			add_arg(matname3);
 			add_arg("transform");
+			add_arg("setmat");
+			add_arg(matrix4 = g_strdup_printf("%f,0,0,0"
+											  "0,%f,0,0"
+											  "0,0,%f,%f", cres, rres,sres,offset));
+			add_arg("transform");
 		}
 	}
 	
@@ -429,6 +442,7 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 		if (matname1) { unlink(matname1); free(matname1); }
 		if (matname2) { unlink(matname2); free(matname2); }
 		if (matname3) { unlink(matname3); free(matname3); }
+		if (matrix4)	g_free(matrix4);
 		if (fname1)	g_free(fname1);
 		if (fname2)	g_free(fname2);
 		if (fname3)	g_free(fname3);
@@ -440,9 +454,11 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 
 	mod_param = FALSE;
 
+	// FIXME : files aren't deleted
 	if (matname1) { free(matname1); }
 	if (matname2) { free(matname2); }
 	if (matname3) { free(matname3); }
+	if (matrix4)	g_free(matrix4);
 	if (fname1)	g_free(fname1);
 	if (fname2)	g_free(fname2);
 	if (fname3)	g_free(fname3);

@@ -23,4 +23,4 @@ enum {
 #define	DICOM_FOUND_ALL	((1<<DICOM_PARAM_NUM)-1)
 
 
-int dicom_getinfo_overview (char *fname, char **seruid, char **name, char **id, char **date, char **type, char **desc, char **res, double *loc);
+int dicom_getinfo_overview (const char *fname, char **seruid, char **name, char **id, char **date, char **type, char **desc, char **res, double *loc);
