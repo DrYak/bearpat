@@ -10,6 +10,7 @@
 		blackkitty@bigfoot.com
 
 	Version :
+		0.4 - 2009/04/01 - support for Mimics and Native Scanner
 		0.3 - 2008/01/13
 		0.2 - 2006/11/07
 		0.1 - 2006/08/30
