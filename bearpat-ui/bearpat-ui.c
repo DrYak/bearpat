@@ -10,6 +10,7 @@
 		blackkitty@bigfoot.com
 
 	Version :
+		0.4 - 2009/04/01 - support for Mimics and Native Scanner
 		0.3.2 - 2009/01/13
 		0.3.1 - 2008/01/21
 		0.3 - 2007/12/01
@@ -115,29 +116,28 @@
 
 
 void init_strings () {
-/*
-	freesurfer_home = "~/freesurfer";	// FREESURFER_HOME
-//	freesurfer_subjects = "$FREESURFER_HOME/subjects";	// SUBJECTS_DIR
-*/
-/*
-	freesurfer_home = "/usr/local/freesurfer";	// FREESURFER_HOME
-	freesurfer_subjects = g_strdup_printf("%s/subjects", getenv("HOME") ?: "~");	// SUBJECTS_DIR
-*/
-
+#ifdef __APPLE__
 	freesurfer_home = "/Applications/freesurfer";	// FREESURFER_HOME
 	freesurfer_subjects = "/Applications/freesurfer/subjects";	// SUBJECTS_DIR
+
+	meshlab_cmd = "/Applications/meshlab.app/Contents/MacOS/meshlab";
+	meshlab_ico = "/Applications/meshlab.app/Contents/Resources/meshlab.icns";
+#else
+/*
+	 freesurfer_home = "~/freesurfer";	// FREESURFER_HOME
+	 //	freesurfer_subjects = "$FREESURFER_HOME/subjects";	// SUBJECTS_DIR
+*/
+	freesurfer_home = "/usr/local/freesurfer";	// FREESURFER_HOME
+	freesurfer_subjects = g_strdup_printf("%s/subjects", getenv("HOME") ?: "~");	// SUBJECTS_DIR
+	
+	meshlab_cmd = "meshlab";
+	meshlab_ico = "/usr/local/meshlab/images/eye64.png";
+#endif
 
 	aeskulap_cmd = "aeskulap";
 	aeskulap_ico = "/usr/local/share/aeskulap/images/aeskulap.png";
 
 	surf_edit = "surf_edit";
-
-/*	meshlab_cmd = "meshlab";
-	meshlab_ico = "/usr/local/meshlab/images/eye64.png";
-*/
-	meshlab_cmd = "/Applications/meshlab.app/Contents/MacOS/meshlab";
-	meshlab_ico = "/Applications/meshlab.app/Contents/Resources/meshlab.icns";
-
 
 	k3b_cmd = "k3b";
 	k3b_ico = "/opt/kde3/share/icons/hicolor/64x64/apps/k3b.png";
