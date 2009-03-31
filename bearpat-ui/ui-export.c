@@ -408,9 +408,9 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 			add_arg(matname3);
 			add_arg("transform");
 			add_arg("setmat");
-			add_arg(matrix4 = g_strdup_printf("%f,0,0,0"
-											  "0,%f,0,0"
-											  "0,0,%f,%f", cres, rres,sres,offset));
+			add_arg(matrix4 = g_strdup_printf("%f,0,0,0,"
+				"0,%f,0,0,"
+				"0,0,%f,%f", cres, rres,sres,offset));
 			add_arg("transform");
 		}
 	}
@@ -423,7 +423,12 @@ gboolean event_savesurf(GtkWidget *widget, gpointer data) {
 	add_arg("end");
 
 	g_message("run surface export script ( %s )", argv[0]);
-
+/*
+	int index;
+	for (index=1; (index < 256) && argv[index]; index++) {
+		g_message(" %s ", argv[index]);
+	}
+*/
 	int fdes;
 	if (!g_spawn_async_with_pipes(NULL,	// cwd
 		argv,
